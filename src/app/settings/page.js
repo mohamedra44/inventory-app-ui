@@ -13,7 +13,7 @@ export default function SettingsPage() {
       className={`flex min-h-screen ${darkMode ? "bg-[#16192c] text-white" : "bg-[#fcfdff]"}`}
     >
       <Sidebar />
-      <main className="flex-1 p-4 md:p-10 xl:ml-64 transition-all duration-300">
+      <main className="flex-1 p-4 md:p-10 max-xl:mt-8 xl:ml-64 transition-all duration-300">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#1e2238]">Settings</h1>
           <p className="text-[#a0a5ba] text-sm">

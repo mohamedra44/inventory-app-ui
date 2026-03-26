@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // عشان نحول المستخدم بعد اللوجين
+import Cookies from "js-cookie"; // المكتبة اللي اتفقنا عليها
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,16 +13,51 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package2, Lock, Mail } from "lucide-react";
+import { Package2, Lock, Mail, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    // هنا هنربط مع الباكيند اللي عملناه (Axios)
-    console.log("Logging in with:", { email, password });
+    setLoading(true);
+    setError("");
+
+    try {
+      // الربط مع الباكيند (تأكد من رابط السيرفر بتاعك)
+      const response = await fetch(
+        "https://inventory-app-api-beta.vercel.app/inventory/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        },
+      );
+
+      const data = await response.json();
+      console.log(data);
+
+      if (response.ok) {
+        // 1. تخزين التوكن في الكوكيز (عشان الـ Middleware يشوفه)
+        Cookies.set("auth-token", data.token, {
+          expires: 1,
+          sameSite: "strict",
+        });
+
+        // 2. توجيه المستخدم للوحة التحكم
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Invalid email or password");
+      }
+    } catch (err) {
+      setError("Connection error. Please check your server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,6 +78,13 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-6">
+            {/* عرض رسالة الخطأ إن وجدت */}
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm font-medium border border-red-100 animate-in fade-in zoom-in duration-200">
+                {error}
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="email" className="text-slate-700 font-semibold">
                 Email Address
@@ -54,12 +98,15 @@ export default function LoginPage() {
                   className="pl-10 border-slate-200 focus:ring-primary focus:border-primary py-6"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required={true}
+                  required
                 />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password text-slate-700 font-semibold">
+              <Label
+                htmlFor="password"
+                className="text-slate-700 font-semibold"
+              >
                 Password
               </Label>
               <div className="relative">
@@ -71,15 +118,24 @@ export default function LoginPage() {
                   className="pl-10 border-slate-200 focus:ring-primary focus:border-primary py-6"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required={true}
+                  required
                 />
               </div>
             </div>
+
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-[#4a4ad4] text-white font-bold py-7 text-lg rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-200"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-[#4a4ad4] text-white font-bold py-7 text-lg rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-200 disabled:opacity-70"
             >
-              Sign In
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Signing In...
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
 
