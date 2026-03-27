@@ -33,7 +33,7 @@ export default function RegisterPage() {
     const { key, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      key: value,
+      [key]: value,
     }));
   };
 
