@@ -30,11 +30,11 @@ export default function RegisterPage() {
   const { darkMode } = useSettings(); // استخدام وضع الدارك مود
 
   const handleChange = (e) => {
-    const { key, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
   const handleRegister = async (e) => {
@@ -47,6 +47,8 @@ export default function RegisterPage() {
     }
 
     if (formData.password.length < 6) {
+      console.log(formData);
+
       setError("Password must be at least 6 characters.");
       return;
     }
@@ -131,7 +133,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  id="name"
+                  name="name"
                   placeholder="John Doe"
                   className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
                   required
@@ -151,7 +153,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  id="email"
+                  name="email"
                   type="email"
                   placeholder="admin@smartstock.com"
                   className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
@@ -173,7 +175,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
-                    id="password"
+                    name="password"
                     type="password"
                     placeholder="********"
                     className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
@@ -192,7 +194,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
-                    id="confirmPassword"
+                    name="confirmPassword"
                     type="password"
                     placeholder="********"
                     className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
