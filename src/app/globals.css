@@ -133,6 +133,36 @@
   --color-primary: #5c5cf0;
 }
 
+@layer components {
+  .custom-scrollbar {
+    /* تأكد إن الـ overflow شغال */
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* للـ Chrome و Safari و Edge */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 10px; /* زودنا الحجم شوية عشان يبان */
+    display: block !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #5c5cf0; /* لون الـ Primary بتاعك */
+    border-radius: 10px;
+    border: 2px solid transparent; /* بيدي مساحة حوالين السكرول */
+    background-clip: content-box;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }

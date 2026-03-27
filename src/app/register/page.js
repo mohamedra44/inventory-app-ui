@@ -1,6 +1,8 @@
-"use client"; // مهم جداً عشان التفاعل والـ onClick
-import Link from "next/link";
+"use client";
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,126 +13,215 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package2 } from "lucide-react";
+import { Package2, Loader2, AlertCircle, User, Mail, Lock } from "lucide-react";
+import { useSettings } from "../_component/SettingsContext"; // استدعاء الـ Dark Mode
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleLogin = async (e) => {
+  const { darkMode } = useSettings(); // استخدام وضع الدارك مود
+
+  const handleChange = (e) => {
+    const { key, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      key: value,
+    }));
+  };
+
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // هنا هنربط مع الباكيند اللي عملناه (Axios)
-    if (password === confirmPassword) {
-      setMessage(false);
-      console.log("register in with:", {
-        name,
-        email,
-        password,
-        confirmPassword,
-      });
-    } else {
-      setMessage(true);
+    setError("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "https://inventory-app-api-beta.vercel.app/inventory/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Cookies.set("auth-token", data.token, { expires: 1 });
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Registration failed. Try again.");
+      }
+    } catch (err) {
+      setError("Server error. Please check your connection.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-slate-50 px-4">
-      <Card className="w-full max-w-md border-none shadow-lg">
+    <div
+      className={`flex min-h-screen w-full items-center justify-center px-4 transition-colors duration-500 ${
+        darkMode ? "bg-[#0f111a]" : "bg-slate-50"
+      }`}
+    >
+      <Card
+        className={`w-full max-w-md border-none shadow-2xl transition-all ${
+          darkMode ? "bg-[#1a1d2e] text-white" : "bg-white"
+        }`}
+      >
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary p-3 rounded-2xl">
+            <div className="bg-primary p-3 rounded-2xl shadow-lg shadow-primary/20">
               <Package2 className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
+          <CardTitle
+            className={`text-3xl font-bold tracking-tight ${
+              darkMode ? "text-white" : "text-slate-900"
+            }`}
+          >
             Create Account
           </CardTitle>
-          <CardDescription className="text-slate-500">
-            Join SmartStock to manage your inventory easily
+          <CardDescription
+            className={darkMode ? "text-slate-400" : "text-slate-500"}
+          >
+            Join SmartStock today and manage your inventory
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <form onSubmit={handleLogin}>
-            <div className="grid gap-2 text-left">
-              <Label htmlFor="username" className="text-slate-700">
+        <CardContent>
+          <form onSubmit={handleRegister} className="grid gap-4">
+            {error && (
+              <div className="bg-red-500/10 text-red-500 p-3 rounded-lg text-xs font-bold flex items-center gap-2 border border-red-500/20 animate-in fade-in zoom-in duration-200">
+                <AlertCircle size={14} /> {error}
+              </div>
+            )}
+
+            {/* Name Input */}
+            <div className="grid gap-1.5">
+              <Label
+                htmlFor="name"
+                className={darkMode ? "text-slate-300" : "text-slate-700"}
+              >
                 Full Name
               </Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Enter Full Name"
-                className="border-slate-200 focus:border-primary mb-2"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
-                required={true}
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
+                  required
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-            <div className="grid gap-2 text-left">
-              <Label htmlFor="email" className="text-slate-700">
+
+            {/* Email Input */}
+            <div className="grid gap-1.5">
+              <Label
+                htmlFor="email"
+                className={darkMode ? "text-slate-300" : "text-slate-700"}
+              >
                 Email Address
               </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@smartstock.com"
-                className="border-slate-200 focus:border-primary mb-2"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                }}
-                required={true}
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@smartstock.com"
+                  className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
+                  required
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-            <div className="grid gap-2 text-left">
-              <Label htmlFor="password" className="text-slate-700">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                className="border-slate-200 focus:border-primary mb-2"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                }}
-                required={true}
-              />
+
+            {/* Password Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label
+                  htmlFor="password"
+                  className={darkMode ? "text-slate-300" : "text-slate-700"}
+                >
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="********"
+                    className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
+                    required
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label
+                  htmlFor="confirmPassword"
+                  className={darkMode ? "text-slate-300" : "text-slate-700"}
+                >
+                  Confirm
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="********"
+                    className={`pl-10 rounded-xl ${darkMode ? "bg-slate-800/50 border-slate-700 text-white" : "border-slate-200"}`}
+                    required
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="grid gap-2 text-left">
-              <Label htmlFor="password" className="text-slate-700">
-                Confirm Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                className="border-slate-200 focus:border-primary "
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                }}
-                required={true}
-              />
-              {message === true ? (
-                <p className="text-red-600">
-                  Confirm Password should equal password!
-                </p>
-              ) : null}
-            </div>
-            <Button className="w-full bg-primary hover:bg-[#4a4ad4] text-white font-semibold py-6 text-lg mt-2">
-              Sign Up
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-[#4a4ad4] text-white font-bold h-12 rounded-xl mt-2 shadow-lg shadow-primary/20"
+            >
+              {loading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Create Account"
+              )}
             </Button>
-            <div className="mt-4 text-center text-sm text-slate-600">
-              Already have an account?{" "}
+
+            <div className="mt-4 text-center text-sm">
+              <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
+                Already have an account?{" "}
+              </span>
               <Link
                 href="/login"
-                className="text-primary hover:underline font-medium"
+                className="text-primary hover:underline font-bold"
               >
                 Sign In
               </Link>
